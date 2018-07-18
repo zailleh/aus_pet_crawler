@@ -35,6 +35,6 @@ module AusPetScraper
     # Don't generate system test files.
     config.generators.system_tests = nil
 
-    # Set default job queuer
+    config.assets.initialize_on_precompile = false
   end
 end
