@@ -80,5 +80,7 @@ class CrawlJob < ApplicationJob
     end
 
     b.quit
+
+    CrawlJob.set(wait: 1.hour).perform_later
   end
 end

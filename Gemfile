@@ -55,7 +55,12 @@ end
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 
-gem 'nokogiri'
+# gem 'nokogiri'
 # gem 'capybara'
 gem 'chromedriver-helper'
 gem 'selenium-webdriver'
+
+## Non-Default Stuff
+group :production do
+  gem 'rails_12factor'
+end
