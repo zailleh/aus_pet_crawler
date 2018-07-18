@@ -3,7 +3,7 @@ class CrawlJob < ApplicationJob
 
   def get_browser
     options = Selenium::WebDriver::Chrome::Options.new(args: ['headless'])
-
+    options.binary = ENV.fetch('GOOGLE_CHROME_SHIM', nil)
     driver = Selenium::WebDriver.for(:chrome, options: options)
     driver
   end
