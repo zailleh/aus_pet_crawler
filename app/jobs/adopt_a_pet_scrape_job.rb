@@ -59,11 +59,11 @@ class AdoptAPetScrapeJob < ScraperJob
     puts "found #{anchors.count} links"
     anchors.each do |a|
       begin
-          puts "adding #{a[:href]}"
-          Site.create url: a[:href] if a[:href].start_with? 'https://www.adoptapet.com.au/'
-        rescue
-          puts "#{a[:href]} is already in the database"
-        end
+        puts "adding #{a[:href]}"
+        Site.create url: a[:href] if a[:href].start_with? 'https://www.adoptapet.com.au/'
+      rescue
+        puts "#{a[:href]} is already in the database"
+      end
     end
   end
 
@@ -74,7 +74,7 @@ class AdoptAPetScrapeJob < ScraperJob
       shelter_id = shelter[:value]
       
       s = Shelter.find_or_initialize_by :shelter_id => shelter_id
-      unless s.id.present? || s.name.empty? || s.state.empty?
+      unless s.id.present? || s.name.present? || s.state.present?
         s.state = shelter.attribute("data-state")
         s.name = shelter.text
         s.save
