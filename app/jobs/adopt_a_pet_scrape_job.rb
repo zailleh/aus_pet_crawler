@@ -189,7 +189,11 @@ class AdoptAPetScrapeJob < ScraperJob
     
     scrape_js_pets browser
     
-    scrape_locations browser #if Shelter.last.updated_at < (Date::today - 1.day)
+    if Shelter.last.present? && Shelter.last.updated_at < (Date::today - 1.day)
+      scrape_locations browser
+    elsif Shelter.last.nil?
+      scrape_locations browser
+    end
     
     scrape_html_pet_data browser
 
