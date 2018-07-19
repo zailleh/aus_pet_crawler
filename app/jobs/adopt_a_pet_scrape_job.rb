@@ -54,10 +54,13 @@ class AdoptAPetScrapeJob < ScraperJob
   end
 
   def scrape_html_pet_links(b)
-    b.find_elements(css: 'div.pet a').each do |a|
+    puts "doing pet links"
+    anchors = b.find_elements(css: 'div.pet a')
+    puts "found #{anchors.count} links"
+    anchors.each do |a|
       begin
           puts "adding #{a[:href]}"
-          Site.create url: a[:href] if a[:href].start_with? s.url
+          Site.create url: a[:href] if a[:href].start_with? 'https://www.adoptapet.com.au/'
         rescue
           puts "#{a[:href]} is already in the database"
         end
@@ -70,11 +73,11 @@ class AdoptAPetScrapeJob < ScraperJob
       
       shelter_id = shelter[:value]
       
-      shelter = Shelter.find_or_initialize_by :shelter_id => shelter_id
-      unless shelter.id.present?
-        shelter.state = shelter['data-state']
-        shelter.name = shelter['inner-text']
-        shelter.save
+      s = Shelter.find_or_initialize_by :shelter_id => shelter_id
+      unless s.id.present? || s.name.empty? || s.state.empty?
+        s.state = shelter.attribute("data-state")
+        s.name = shelter.text
+        s.save
       end
     end
 
@@ -165,6 +168,7 @@ class AdoptAPetScrapeJob < ScraperJob
 
       p.description1 = pet_info['description1']
 
+      p.shelter = s.shelter_id
       if p.save
         # create images
         # active image first
@@ -179,14 +183,15 @@ class AdoptAPetScrapeJob < ScraperJob
   end
 
   def perform (url)
+    super url
     browser = get_browser
     load_page browser, url
     
-    # scrape_js_pets browser
+    scrape_js_pets browser
     
-    # scrape_locations browser if Shelter.last.updated_at > (Date::today - 1.day)
+    scrape_locations browser #if Shelter.last.updated_at < (Date::today - 1.day)
     
-    # scrape_html_pet_data browser
+    scrape_html_pet_data browser
 
     scrape_html_pet_links browser
   end

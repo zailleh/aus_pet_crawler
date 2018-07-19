@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_07_19_004058) do
+ActiveRecord::Schema.define(version: 2018_07_19_041953) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -84,6 +84,7 @@ ActiveRecord::Schema.define(version: 2018_07_19_004058) do
     t.datetime "last_scan", default: "2018-07-18 04:04:18"
     t.datetime "next_scan", default: "2018-07-18 04:04:18"
     t.integer "scan_interval", default: 1440
+    t.datetime "last_scraped"
     t.index ["last_scan"], name: "index_sites_on_last_scan"
     t.index ["next_scan"], name: "index_sites_on_next_scan"
     t.index ["url"], name: "index_sites_on_url", unique: true

@@ -10,9 +10,13 @@ class ScraperJob < ApplicationJob
 
   def load_page(browser, url)
     browser.get url
+    puts "Sleeping 10 Seonds to allow JS to run"
+    sleep 10
   end
 
   def perform(url)
-    
+    s = Site.find_by url: url 
+    s.last_scraped = DateTime::now
+    s.save
   end
 end
