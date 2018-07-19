@@ -16,7 +16,7 @@ class CrawlJob < ApplicationJob
       b.get(s.url)
 
       s.last_scan = DateTime::now
-      s.next_scan = DateTime::now + s.scan_interval.minutes
+      s.next_scan = DateTime::now + (s.scan_interval.minutes * (Random.rand - 0.5))
       s.save
 
       b.find_elements(css: 'a').each do |a|
@@ -30,7 +30,7 @@ class CrawlJob < ApplicationJob
 
     b.quit
 
-    CrawlJob.set(wait: 1.hour).perform_later
+    CrawlJob.set(wait: 5.minutes).perform_later
     
   end
 end

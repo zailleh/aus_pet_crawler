@@ -56,6 +56,7 @@ class AdoptAPetScrapeJob < ScraperJob
   def scrape_html_pet_links(b)
     b.find_elements(css: 'div.pet a').each do |a|
       begin
+          puts "adding #{a[:href]}"
           Site.create url: a[:href] if a[:href].start_with? s.url
         rescue
           puts "#{a[:href]} is already in the database"
@@ -181,9 +182,13 @@ class AdoptAPetScrapeJob < ScraperJob
     browser = get_browser
     load_page browser, url
     
-    scrape_locations browser
+    # scrape_js_pets browser
+    
+    # scrape_locations browser if Shelter.last.updated_at > (Date::today - 1.day)
+    
+    # scrape_html_pet_data browser
 
-    scrape_html_pet_data browser
+    scrape_html_pet_links browser
   end
 
 end
