@@ -16,7 +16,9 @@ class ScraperJob < ApplicationJob
 
   def perform(url)
     s = Site.find_by url: url 
-    s.last_scraped = DateTime::now
-    s.save
+    if s.present?
+      s.last_scraped = DateTime::now
+      s.save
+    end
   end
 end
