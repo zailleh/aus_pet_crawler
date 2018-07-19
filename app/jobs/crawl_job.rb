@@ -8,13 +8,20 @@ class CrawlJob < ApplicationJob
     driver
   end
 
+  def fetch_url(browser, url)
+    browser.get url
+    sleep 10
+  end
+
   def perform
     b = get_browser
 
     Site.where('next_scan <= ?', DateTime::now).each do |s|
-      AdoptAPetScrapeJob.perform_later s.url
-      b.get(s.url)
+      fetch_url b, s.url
 
+      # Send entire browser through to scrape job after loading the URL
+      AdoptAPetScrape.new b
+     
       s.last_scan = DateTime::now
       s.next_scan = DateTime::now + (s.scan_interval.minutes * (Random.rand - 0.5))
       s.save

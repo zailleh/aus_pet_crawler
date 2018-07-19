@@ -1,5 +1,8 @@
-class AdoptAPetScrapeJob < ScraperJob
+class AdoptAPetScrape < Scraper
 
+  def initialize(browser)
+    scrape browser
+  end
   def scrape_js_pets(b) #b for browser
     begin
         animals = JSON.parse (b.execute_script( 'return init_animals == undefined? null : JSON.stringify(init_animals)'))
@@ -86,14 +89,14 @@ class AdoptAPetScrapeJob < ScraperJob
 
   def extract_pet_info(b)
     info = b.find_elements(css: '#pet-info > p.category')
-    description = b.find_element(css: '#about-pet:nth-of-type(2) > div')
-    description = description.text.remove description.find_element(css: 'h2').text
+    description = b.find_elements(css: '#about-pet:nth-of-type(2) > div')[0]
+    description = description.text.remove description.find_elements(css: 'h2')[0].text
 
     pet_info = {}
     pet_info['description1'] = description
 
     info.each do |inf|
-      attribute = inf.find_element(css: 'b').text 
+      attribute = inf.find_elements(css: 'b')[0].text 
       value = inf.text.remove attribute
       pet_info[attribute.downcase.remove ": ", ":"] = value
     end
@@ -108,16 +111,16 @@ class AdoptAPetScrapeJob < ScraperJob
       unless detail.text.empty?
         #extract attribute name from the bold portion of the paragraph
         begin #We're going to catch if there's no b tag found since it'll be an empty P
-          attribute_name = detail.find_element(css: 'b').text
+          attribute_name = detail.find_elements(css: 'b')[0].text
           attribute = attribute_name.downcase.remove ": ", ":"
           # special instructions for address
           puts "attribute_name: #{attribute_name}"
           puts "attribute: #{attribute}"
 
           if attribute == 'address'
-            value = b.find_element(css: '#contact-pet > p:not([class])').text
+            value = b.find_elements(css: '#contact-pet > p:not([class])')[0].text
           elsif attribute == 'adoptions'
-            value = b.find_element(css: "#contact-pet > p:nth-child(#{i+4})").text
+            value = b.find_elements(css: "#contact-pet > p:nth-child(#{i+4})")[0].text
           else  
             value = detail.text.remove attribute_name
           end
@@ -182,11 +185,10 @@ class AdoptAPetScrapeJob < ScraperJob
     end
   end
 
-  def perform (url)
-    super url
-    browser = get_browser
-    load_page browser, url
-    
+  
+  def scrape(browser)
+    super browser.current_url
+        
     scrape_js_pets browser
     
     if Shelter.last.present? && Shelter.last.updated_at < (Date::today - 1.day)
