@@ -3,5 +3,6 @@ Rails.application.routes.draw do
   root to: "api#pets"
   get '/pets' => "api#pets"
   get '/pets/:id' => "api#photos"
-  get '/shelter/:id' => "api#shelter"
+  get '/shelters' => "api#shelters"
+  get '/shelters/:id' => "api#shelter"
 end

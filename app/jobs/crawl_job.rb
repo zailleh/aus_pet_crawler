@@ -20,8 +20,12 @@ class CrawlJob < ApplicationJob
       s.save
 
       b.find_elements(css: 'a').each do |a|
+        link = a[:href]
+        
         begin
-          Site.create url: a[:href] if a[:href].start_with? s.url
+          unless !link.start_with?(s.url) || link.include?("#")
+            Site.create url: link
+          end
         rescue
           puts "#{a[:href]} is already in the database"
         end

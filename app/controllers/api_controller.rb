@@ -15,4 +15,9 @@ class ApiController < ApplicationController
     render :plain => shelter.to_json, content_type: "application/json"
   end
 
+  def shelters
+    shelters = Shelter.all
+    render :plain => shelters.to_json, content_type: "application/json"
+  end
+
 end
