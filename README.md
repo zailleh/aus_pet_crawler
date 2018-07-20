@@ -1,15 +1,17 @@
 # :smile_cat: Australian Pet Adoption API
-:dog2:**Mission:** to be an API that contains pets for adoption from all over Australia
+:dog2:**Mission:** to be an API for a database that contains pets for adoption from all over Australia!
 
 Use the API at: https://au-pet-api.herokuapp.com/
 
 ## :rabbit: How to use the API
-Firsly, the API returns `application/json` data only. The root for the API returns a list of *all pets*. You can parse this data into an object in the language of your choice.
+The API returns `application/json` data only. The root for the API returns a list of *all pets*. You can parse this data into an object in the language of your choice.
 
 ### :dog: API URLS
 * `.../` returns all pets
 * `.../pets/` returns all pets
 * `.../pets/:id` returns urls for pictures for the pet `:id`
+* `.../shelters/` returns all shelters
+* `.../shelters/:id` returns shelter for `:id` 
 
 #### Features to add: 
 * `.../pets/:type` to return pets of type `:type`, eg 'cat'
@@ -24,6 +26,7 @@ This API is run using:
 
 ### Dependencies
 * [chromedriver](http://chromedriver.chromium.org/) ( install with `brew cask install chromedriver` )
+* Chrome Binary (ie, Google Chrome browser must be installed)
 
 #### Buildpacks for Heroku:
 Heroku requires the [chromedriver](https://github.com/heroku/heroku-buildpack-google-chrome) and [google-chrome](https://github.com/heroku/heroku-buildpack-chromedriver) buildpacks to run the scraper portion of the API:
@@ -37,6 +40,7 @@ As mentioned above, the database in use is PostgreSQL. After cloning the repo, a
 ```
 rails db:create && rails db:migrate && rails db:seed
 ```
+*db:create can be left off for Heroku deployment.*
 
 ### Services 
 This API currently uses a single `ActiveJob` to gather data, called `CrawlJob`. This job will run automatically  1 minute after startup and every hour thereafter.
