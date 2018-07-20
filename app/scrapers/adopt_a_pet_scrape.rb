@@ -90,7 +90,7 @@ class AdoptAPetScrape < Scraper
   def extract_pet_info(b)
     info = b.find_elements(css: '#pet-info > p.category')
     description = b.find_elements(css: '#about-pet:nth-of-type(2) > div')[0]
-    description = description.text.remove description.find_elements(css: 'h2')[0].text
+    description = description.text.remove description.find_elements(css: 'h2')[0].text if description.present?
 
     pet_info = {}
     pet_info['description1'] = description
