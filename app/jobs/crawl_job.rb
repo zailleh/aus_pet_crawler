@@ -20,7 +20,8 @@ class CrawlJob < ApplicationJob
       fetch_url b, s.url
 
       # Send entire browser through to scrape job after loading the URL
-      AdoptAPetScrape.new b
+      scraper = AdoptAPetScrape.new b
+      scraper.scrape
      
       s.last_scan = DateTime::now
       s.next_scan = DateTime::now + (s.scan_interval.minutes * (Random.rand - 0.5))
