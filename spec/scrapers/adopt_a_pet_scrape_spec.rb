@@ -19,5 +19,10 @@ describe 'AdoptAPetScraper' do
     end
   end
 
-  
+  describe "scrapes" do
+    it "gets pets on homepage from js" do
+      
+    end
+  end
+
 end

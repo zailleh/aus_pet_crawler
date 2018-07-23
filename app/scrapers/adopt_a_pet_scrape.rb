@@ -1,7 +1,7 @@
 class AdoptAPetScrape < Scraper
 
   def initialize(browser)
-    @browser = browser
+    super browser
   end
   def scrape_js_pets(b) #b for browser
     begin
