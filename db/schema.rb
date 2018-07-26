@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_07_26_063246) do
+ActiveRecord::Schema.define(version: 2018_07_26_222233) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -40,7 +40,6 @@ ActiveRecord::Schema.define(version: 2018_07_26_063246) do
     t.string "size"
     t.string "state"
     t.string "animal_status"
-    t.bigint "animal_type"
     t.text "public_url"
     t.boolean "active"
     t.datetime "created_at", null: false

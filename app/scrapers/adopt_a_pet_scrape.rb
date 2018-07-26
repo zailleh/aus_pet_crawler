@@ -1,5 +1,13 @@
 class AdoptAPetScrape < Scraper
 
+  def parse_status(status_id)
+    # ['Looking','Trial','Fostered','Adopted']
+    case status_id
+    when nil then "Looking"
+    when '3' then "Looking"
+    end
+  end
+
   def parse_pet_data(data)
     parsed_data = {
       name:                 data['name'],  #somestuff
@@ -9,7 +17,7 @@ class AdoptAPetScrape < Scraper
       date_of_birth:        data['date_of_birth'],  #somestuff
       breed_primary:        data['breedPrimary'],  #somestuff
       desexed:              data['isDesexed'],  #somestuff
-      primary_colour:       data['primary']['colour'],  #somestuff
+      primary_colour:       data['primary_colour']['colour'],  #somestuff
       behaviour_evaluated:  data['hadBehaviourEvalidated'],  #somestuff
       health_checked:       data['hadHealthChecked'],  #somestuff
       vaccinated:           data['isVaccinated'],  #somestuff
@@ -22,50 +30,55 @@ class AdoptAPetScrape < Scraper
       sex:                  data['sex'],  #somestuff
       size:                 data['size']['size'],  #somestuff
       state:                data['state']['name'],  #somestuff
-      animal_status:        data['animal_status'],  #somestuff
+      animal_status:        parse_status( data['animal_status'] ),  #somestuff
       #animal_type:          data[],  #somestuff
       public_url:           data['public_url'],  #somestuff
       active:               data['isActive'],  #somestuff
-      type_name:            data['type']['type_tite']  #somestuff
+      type_name:            data['type']['type_title']  #somestuff
     }
   end
 
-  def scrape_js_pets(b) #b for browser
+  def scrape_js_pets() #b for browser
     begin
-        animals = JSON.parse (b.execute_script( 'return init_animals == undefined? null : JSON.stringify(init_animals)'))
-        
-        if animals.present?
-          animals.each do |a|
-            new_pet = parse_pet_data a
-            
-            p = Pet.find_or_create_by :pet_id => new_pet[:pet_id]
-            p.update new_pet
-
-            photos.each do |pic|
-              pic.delete 'updated_at'
-              pic.delete 'created_at'
-              pic.delete 'id'
-              pic['image_path'].prepend 'https://www.adoptapet.com.au'
-              new_pic = p.photos.find_or_create_by :api_id => pic['api_id']
-              new_pic.update pic
-            end
+      animals = JSON.parse (@browser.execute_script( 'return init_animals == undefined? null : JSON.stringify(init_animals)'))
+      
+      if animals.present?
+        animals.each do |a|
+          new_pet = parse_pet_data a
+          
+          p = Pet.find_or_create_by :pet_id => new_pet[:pet_id]
+          p.assign_attributes new_pet
+          unless p.valid?
+            p.errors.each {|k, v| puts "#{k.capitalize}: #{v}"}
           end
+          
+          p.save
 
-          begin
-            url = "https://www.adoptapet.com.au/pet/#{ p.api_id }"
-            Site.create url: url
-          rescue
-            puts "#{url} is already in the database"
+          photos.each do |pic|
+            pic.delete 'updated_at'
+            pic.delete 'created_at'
+            pic.delete 'id'
+            pic['image_path'].prepend 'https://www.adoptapet.com.au'
+            new_pic = p.photos.find_or_create_by :api_id => pic['api_id']
+            new_pic.update pic
           end
         end
-      rescue
-        puts "JavaScript failed, no animals_init"
+
+        begin
+          url = "https://www.adoptapet.com.au/pet/#{ p.api_id }"
+          Site.create url: url
+        rescue
+          puts "#{url} is already in the database"
+        end
       end
+    rescue
+      false
+    end
   end
 
-  def scrape_html_pet_links(b)
+  def scrape_html_pet_links
     puts "doing pet links"
-    anchors = b.find_elements(css: 'div.pet a')
+    anchors = @browser.find_elements(css: 'div.pet a')
     puts "found #{anchors.count} links"
     anchors.each do |a|
       begin
@@ -77,8 +90,8 @@ class AdoptAPetScrape < Scraper
     end
   end
 
-  def scrape_locations(b)
-    locations = b.find_elements(css: '#location > option')
+  def scrape_locations
+    locations = @browser.find_elements(css: '#location > option')
     locations.each do |shelter|
       
       shelter_id = shelter[:value]
@@ -94,9 +107,14 @@ class AdoptAPetScrape < Scraper
     return nil
   end
 
-  def extract_pet_info(b)
-    info = b.find_elements(css: '#pet-info > p.category')
-    description = b.find_elements(css: '#about-pet:nth-of-type(2) > div')[0]
+  def get(url)
+    super url
+    sleep 10 #allow time for resources to load and JS to run
+  end
+
+  def extract_pet_info
+    info = @browser.find_elements(css: '#pet-info > p.category')
+    description = @browser.find_elements(css: '#about-pet:nth-of-type(2) > div')[0]
     description = description.text.remove description.find_elements(css: 'h2')[0].text if description.present?
 
     pet_info = {}
@@ -111,8 +129,8 @@ class AdoptAPetScrape < Scraper
     pet_info
   end
 
-  def extract_shelter_info(b)
-    shelter = b.find_elements(css: '#contact-pet > p')
+  def extract_shelter_info
+    shelter = @browser.find_elements(css: '#contact-pet > p')
     shelter_data = {}
     shelter.each_with_index do |detail,i|
       unless detail.text.empty?
@@ -125,9 +143,9 @@ class AdoptAPetScrape < Scraper
           puts "attribute: #{attribute}"
 
           if attribute == 'address'
-            value = b.find_elements(css: '#contact-pet > p:not([class])')[0].text
+            value = @browser.find_elements(css: '#contact-pet > p:not([class])')[0].text
           elsif attribute == 'adoptions'
-            value = b.find_elements(css: "#contact-pet > p:nth-child(#{i+4})")[0].text
+            value = @browser.find_elements(css: "#contact-pet > p:nth-child(#{i+4})")[0].text
           else  
             value = detail.text.remove attribute_name
           end
@@ -142,10 +160,10 @@ class AdoptAPetScrape < Scraper
     shelter_data
   end
 
-  def scrape_html_pet_data(b)
+  def scrape_html_pet_data
     # if the pet-info is not there, we're not on a pet page, so don't try.
-    unless b.find_elements(css: '#pet-info > p.category').empty?
-      active_image = b.find_elements(css: '#pet-picture > div > div.swiper-container.gallery-top.swiper-container-horizontal > div > div.swiper-slide.swiper-slide-active > img')[0]
+    unless @browser.find_elements(css: '#pet-info > p.category').empty?
+      active_image = @browser.find_elements(css: '#pet-picture > div > div.swiper-container.gallery-top.swiper-container-horizontal > div > div.swiper-slide.swiper-slide-active > img')[0]
 
       images = b.find_elements(css: '#pet-picture > div > div.swiper-container.gallery-thumbs.swiper-container-horizontal > div > div.swiper-slide > img')
 
@@ -193,20 +211,20 @@ class AdoptAPetScrape < Scraper
   end
 
   
-  def scrape(browser)
-    super browser.current_url
+  def scrape
+    super @browser.current_url
         
-    scrape_js_pets browser
+    scrape_js_pets
     
     if Shelter.last.present? && Shelter.last.updated_at < (Date::today - 1.day)
-      scrape_locations browser
+      scrape_locations @browser
     elsif Shelter.last.nil?
-      scrape_locations browser
+      scrape_locations @browser
     end
     
-    scrape_html_pet_data browser
+    scrape_html_pet_data @browser
 
-    scrape_html_pet_links browser
+    scrape_html_pet_links @browser
   end
 
 end

@@ -27,7 +27,6 @@
 #  size                :string
 #  state               :string
 #  animal_status       :string
-#  animal_type         :bigint(8)
 #  public_url          :text
 #  active              :boolean
 #  created_at          :datetime         not null
@@ -37,6 +36,15 @@
 
 class Pet < ApplicationRecord
   has_many :photos
+  after_initialize :defaults, unless: :persisted?
+              # ":if => :new_record?" is equivalent in this context
+
+  def defaults
+    self.behaviour_evaluated = false if self.behaviour_evaluated.nil?
+    self.special_needs_ok = false if self.special_needs_ok.nil?
+    self.long_term_resident = false if self.long_term_resident.nil?
+    self.senior = false if self.senior.nil?
+  end
 
   # validate presence
   validates :name, 
@@ -47,20 +55,12 @@ class Pet < ApplicationRecord
             :breed_primary,
             :desexed,
             :primary_colour,
-            :behaviour_evaluated,
-            :health_checked,
             :vaccinated,
-            :wormed,
-            :special_needs_ok,
-            :long_term_resident,
-            :senior,
-            :microchipped,
             :shelter,
             :sex,
             :size,
             :state,
             :animal_status,
-            :animal_type,
             :public_url,
             :active,
             :type_name,
