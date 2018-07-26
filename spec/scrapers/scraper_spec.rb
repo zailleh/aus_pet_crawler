@@ -17,7 +17,7 @@ describe 'Scraper' do
 
   describe "scraper" do
     it "gets a page" do
-      scraper.scrape 'http://www.google.com.au'
+      scraper.get 'http://www.google.com.au'
       expect(scraper.current_url).to eq 'https://www.google.com.au/?gws_rd=ssl'
     end
 

@@ -13,8 +13,7 @@ class Scraper
   end
 
   def scrape(url)
-    get url
-    s = Site.find_by url: url 
+    s = Site.find_by( :url => url )
     
     if s.present?
       s.last_scraped = DateTime::now

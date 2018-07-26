@@ -1,38 +1,45 @@
 class AdoptAPetScrape < Scraper
 
-  def initialize(browser)
-    super browser
+  def parse_pet_data(data)
+    parsed_data = {
+      name:                 data['name'],  #somestuff
+      api_id:               data['api_id'],  #somestuff
+      pet_id:               data['id'],  #somestuff
+      description:          data['description1'],  #somestuff
+      date_of_birth:        data['date_of_birth'],  #somestuff
+      breed_primary:        data['breedPrimary'],  #somestuff
+      desexed:              data['isDesexed'],  #somestuff
+      primary_colour:       data['primary']['colour'],  #somestuff
+      behaviour_evaluated:  data['hadBehaviourEvalidated'],  #somestuff
+      health_checked:       data['hadHealthChecked'],  #somestuff
+      vaccinated:           data['isVaccinated'],  #somestuff
+      wormed:               data['isWormed'],  #somestuff
+      special_needs_ok:     data['isSpecialNeedsOkay'],  #somestuff
+      long_term_resident:   data['isLongTermResident'],  #somestuff
+      senior:               data['isSeniorPet'],  #somestuff
+      microchipped:         data['isMicrochipped'],  #somestuff
+      shelter:              data['shelter'],  #somestuff
+      sex:                  data['sex'],  #somestuff
+      size:                 data['size']['size'],  #somestuff
+      state:                data['state']['name'],  #somestuff
+      animal_status:        data['animal_status'],  #somestuff
+      #animal_type:          data[],  #somestuff
+      public_url:           data['public_url'],  #somestuff
+      active:               data['isActive'],  #somestuff
+      type_name:            data['type']['type_tite']  #somestuff
+    }
   end
+
   def scrape_js_pets(b) #b for browser
     begin
         animals = JSON.parse (b.execute_script( 'return init_animals == undefined? null : JSON.stringify(init_animals)'))
         
         if animals.present?
           animals.each do |a|
-
-            a['type_name'] = a['type']['type_title']
-            a['secondary_colour'] = a['secondary_colour']['colour']
-            a['primary_colour'] = a['primary_colour']['colour']
-            a['state'] = a['state']['name']
+            new_pet = parse_pet_data a
             
-            a['size'] = a['size']['size']
-            a['pet_id'] = a['id']
-
-            photos = a['photo']
-            a.delete 'photo'
-            a.delete 'breedPrimaryId'
-            a.delete 'breedSecondaryId'
-            a.delete 'colourPrimaryId'
-            a.delete 'colourSecondaryId'
-            a.delete 'search_type_id'
-            a.delete 'search_type'
-            a.delete 'state_id'
-            a.delete 'type'
-
-            a.delete 'id'
-
-            p = Pet.find_or_create_by :pet_id => a['pet_id']
-            p.update a
+            p = Pet.find_or_create_by :pet_id => new_pet[:pet_id]
+            p.update new_pet
 
             photos.each do |pic|
               pic.delete 'updated_at'
