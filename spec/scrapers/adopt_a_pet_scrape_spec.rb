@@ -50,10 +50,10 @@ describe 'AdoptAPetScraper' do
     it 'pet page data' do
       scraper.get 'https://www.adoptapet.com.au/pet/548310'
       s = scraper.extract_shelter_info 
-      data = scraper.extract_pet_info s.id
+      data = scraper.extract_pet_info(1)
       p = Pet.new (scraper.parse_pet_data data)
-      
-      expect(p.valid?).to be true
+      p.valid?
+      expect(p.errors.messages).to be {}
     end
   end
 
