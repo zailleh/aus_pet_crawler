@@ -29,7 +29,6 @@ class AdoptAPetScrape < Scraper
       shelter:              data['shelter'],  #somestuff
       sex:                  data['sex'],  #somestuff
       size:                 data['size']['size'],  #somestuff
-      state:                data['state']['name'],  #somestuff
       animal_status:        parse_status( data['animal_status'] ),  #somestuff
       #animal_type:          data[],  #somestuff
       public_url:           data['public_url'],  #somestuff
@@ -38,7 +37,7 @@ class AdoptAPetScrape < Scraper
     }
   end
 
-  def scrape_js_pets() #b for browser
+  def scrape_js_pets
     begin
       animals = JSON.parse (@browser.execute_script( 'return init_animals == undefined? null : JSON.stringify(init_animals)'))
       
@@ -112,12 +111,78 @@ class AdoptAPetScrape < Scraper
     sleep 10 #allow time for resources to load and JS to run
   end
 
-  def extract_pet_info
+  def extract_health_checks
+    # <div class="col-xs-12">
+    #   <h3><b>My stats</b></h3>
+    #   <div class="row">
+    #       <div class="col-xs-2 col-lg-1"><i class="fa fa-check"></i></div>
+    #       <div class="col-xs-10 col-lg-10">
+    #           <p>My health has been checked</p>
+    #       </div>
+    #   </div>
+    #   <div class="row">
+    #       <div class="col-xs-2 col-lg-1"><i class="fa fa-check"></i></div>
+    #       <div class="col-xs-10 col-lg-10">
+    #           <p>My vaccinations are up-to-date</p>
+    #       </div>
+    #   </div>
+    #   <div class="row">
+    #       <div class="col-xs-2 col-lg-1"><i class="fa fa-check"></i></div>
+    #       <div class="col-xs-10 col-lg-10">
+    #           <p>My worming is up-to-date</p>
+    #       </div>
+    #   </div>
+    #   <div class="row">
+    #       <div class="col-xs-2 col-lg-1"><i class="fa fa-check"></i></div>
+    #       <div class="col-xs-10 col-lg-10">
+    #           <p>I have been microchipped</p>
+    #       </div>
+    #   </div>
+    #   <div class="row">
+    #       <div class="col-xs-2 col-lg-1"><i class="fa fa-check"></i></div>
+    #       <div class="col-xs-10 col-lg-10">
+    #           <p>I am desexed</p>
+    #       </div>
+    #   </div>
+    # </div>
+    healthchecks = @browser.find_elements(css: '#stats > div > div.row')
+    checksdata = {}
+    healthchecks.each do |h|
+      item = h.find_elements(css: 'p')
+      item = !item.nil? ? item[0].text.downcase : nil
+      
+      case 
+      when item.include?('desex')
+        checksdata[:desexed] = item.include? 'i am desexed'
+      when item.include?('microchip')
+        checksdata[:microchipped] = item.include? 'i have been microchipped'
+      when item.include?('worm')
+        checksdata[:wormed] = item.include? 'my worming is up-to-date'
+      when item.include?('vaccin')
+        checksdata[:vaccinated] = item.include? 'my vaccinations are up-to-date'
+      when item.include?('health')
+        checksdata[:health_checked] = item.include? 'my health has been checked'
+      end
+    end
+
+    checksdata
+  end
+
+  def extract_pet_info( shelter_id )
     info = @browser.find_elements(css: '#pet-info > p.category')
     description = @browser.find_elements(css: '#about-pet:nth-of-type(2) > div')[0]
     description = description.text.remove description.find_elements(css: 'h2')[0].text if description.present?
 
     pet_info = {}
+    
+    pet_id = @browser.find_elements(css: '#pet-id > h3')[0]
+    attribute = pet_id.find_elements(css: 'b')[0].text 
+    value = pet_id.text.remove attribute
+    pet_info['id'] = value
+
+    health_data = extract_health_checks
+
+    
     pet_info['description1'] = description
 
     info.each do |inf|
@@ -125,6 +190,33 @@ class AdoptAPetScrape < Scraper
       value = inf.text.remove attribute
       pet_info[attribute.downcase.remove ": ", ":"] = value
     end
+
+    pet_info['type'] = { 'type_title' => pet_info['type'] }
+    pet_info['breedPrimary'] = pet_info['breed'].split(' / ')[0]
+    pet_info['breedSecondary'] = pet_info['breed'].split(' / ')[1]
+
+    pet_info['sex'] = pet_info['sex'].strip.capitalize #
+    pet_info['size'] = { 'size' => pet_info['size'].strip.capitalize }
+
+    # colours
+    colours = pet_info['colour'].split(' / ')
+    pet_info['primary_colour'] = { 'colour' => colours[0] }
+    pet_info['secondary_colour'] = { 'colour' => colours[1] }
+    pet_info['shelter'] = shelter_id
+
+    #18 years and 7 months => ["18","7"]
+    age_parts = pet_info['age'].scan(/\d{1,2}/)
+    dob = Date::today - age_parts[0].to_i.years - age_parts[1].to_i.months
+    pet_info['date_of_birth'] = dob
+    
+    pet_info['api_id'] = @browser.current_url.split("/").last.to_i
+    pet_info['isDesexed'] = health_data[:desexed]
+    pet_info['isVaccinated'] = health_data[:vaccinated]
+    pet_info['isMicrochipped'] = health_data[:microchipped]
+    pet_info['hadHealthChecked'] = health_data[:health_checked]
+    pet_info['isWormed'] = health_data[:wormed]
+    pet_info['public_url'] = @browser.current_url
+    pet_info['isActive'] = true # TODO: Find Out if this can be retreived from the page
 
     pet_info
   end
@@ -139,8 +231,6 @@ class AdoptAPetScrape < Scraper
           attribute_name = detail.find_elements(css: 'b')[0].text
           attribute = attribute_name.downcase.remove ": ", ":"
           # special instructions for address
-          puts "attribute_name: #{attribute_name}"
-          puts "attribute: #{attribute}"
 
           if attribute == 'address'
             value = @browser.find_elements(css: '#contact-pet > p:not([class])')[0].text
@@ -152,12 +242,17 @@ class AdoptAPetScrape < Scraper
           
           shelter_data[attribute] = value
         rescue
-          puts "no b tag found"
+          # puts "no b tag found"
         end
       end
     end
 
-    shelter_data
+    s = Shelter.find_or_initialize_by :name => shelter_data['location']
+    s.phone = shelter_data['phone']
+    s.details = shelter_data['adoptions']
+    s.address = shelter_data['address']
+
+    return s
   end
 
   def scrape_html_pet_data
@@ -167,36 +262,16 @@ class AdoptAPetScrape < Scraper
 
       images = b.find_elements(css: '#pet-picture > div > div.swiper-container.gallery-thumbs.swiper-container-horizontal > div > div.swiper-slide > img')
 
-      pet_info = extract_pet_info b
-      shelter_info = extract_shelter_info b
+      # create shelter first as pet must have a shelter
+      shelter = extract_shelter_info
+      shelter.save
 
-      # create shelter
-      s = Shelter.find_or_initialize_by :name => shelter_info['location']
-      s.phone = shelter_info['phone']
-      s.details = shelter_info['adoptions']
-      s.address = shelter_info['address']
-      s.save
+      #get pet info
+      pet_info = extract_pet_info s.id
 
       # create pet
-      p = Pet.find_or_initialize_by :api_id => b.current_url.split("/").last.to_i
-      p.name = pet_info['name'] #checked
-      p.type_name = pet_info['type'] #c
-      p.breedPrimary = pet_info['breed'].split(' / ')[0] #
-      p.breedSecondary = pet_info['breed'].split(' / ')[1] #
+      p = Pet.find_or_initialize_by p['api_id']
 
-      p.sex = pet_info['sex'] #
-      p.size = pet_info['size'] #
-      p.primary_colour = pet_info['colour'].split(' / ')[0] #
-      p.secondary_colour = pet_info['colour'].split(' / ')[1] #
-
-      #18 years and 7 months => ["18","7"]
-      age_parts = pet_info['age'].scan(/\d{1,2}/)
-      dob = Date::today - age_parts[0].to_i.years - age_parts[1].to_i.months
-      p.date_of_birth = dob
-
-      p.description1 = pet_info['description1']
-
-      p.shelter = s.shelter_id
       if p.save
         # create images
         # active image first

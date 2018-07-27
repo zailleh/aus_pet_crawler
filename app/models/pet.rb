@@ -25,7 +25,6 @@
 #  shelter             :bigint(8)
 #  sex                 :string
 #  size                :string
-#  state               :string
 #  animal_status       :string
 #  public_url          :text
 #  active              :boolean
@@ -59,7 +58,6 @@ class Pet < ApplicationRecord
             :shelter,
             :sex,
             :size,
-            :state,
             :animal_status,
             :public_url,
             :active,
