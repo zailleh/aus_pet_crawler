@@ -10,7 +10,6 @@ class ReworkPets < ActiveRecord::Migration[5.2]
       t.remove :readable_age
       t.remove :ageMonths
       t.remove :ageYears
-      t.remove :isCrossBreed
       t.remove :colour_url
       t.remove :breeder_id
       t.remove :youTubeVideo
