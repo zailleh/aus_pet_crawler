@@ -96,10 +96,9 @@ class AdoptAPetScrape < Scraper
       shelter_id = shelter[:value]
       
       s = Shelter.find_or_initialize_by :shelter_id => shelter_id
-      unless s.id.present? || s.name.present? || s.state.present?
-        s.state = shelter.attribute("data-state")
-        s.name = shelter.text
-        s.save
+      s.state = shelter.attribute("data-state")
+      s.name = shelter.text
+      s.save
       end
     end
 
@@ -176,9 +175,13 @@ class AdoptAPetScrape < Scraper
     pet_info = {}
     
     pet_id = @browser.find_elements(css: '#pet-id > h3')[0]
-    attribute = pet_id.find_elements(css: 'b')[0].text 
-    value = pet_id.text.remove attribute
-    pet_info['id'] = value
+    if pet_id.present?
+      attribute = pet_id.find_elements(css: 'b')[0].text 
+      value = pet_id.text.remove attribute
+      pet_info['id'] = value
+    else 
+      pet_info['id']= -1;
+    end
 
     health_data = extract_health_checks
 
@@ -216,7 +219,7 @@ class AdoptAPetScrape < Scraper
     pet_info['hadHealthChecked'] = health_data[:health_checked]
     pet_info['isWormed'] = health_data[:wormed]
     pet_info['public_url'] = @browser.current_url
-    pet_info['isActive'] = true # TODO: Find Out if this can be retreived from the page
+    pet_info['isActive'] = @browser.find_elements(css: '.unavailable-container')[0].nil?
 
     pet_info
   end
@@ -260,17 +263,17 @@ class AdoptAPetScrape < Scraper
     unless @browser.find_elements(css: '#pet-info > p.category').empty?
       active_image = @browser.find_elements(css: '#pet-picture > div > div.swiper-container.gallery-top.swiper-container-horizontal > div > div.swiper-slide.swiper-slide-active > img')[0]
 
-      images = b.find_elements(css: '#pet-picture > div > div.swiper-container.gallery-thumbs.swiper-container-horizontal > div > div.swiper-slide > img')
+      images = @browser.find_elements(css: '#pet-picture > div > div.swiper-container.gallery-thumbs.swiper-container-horizontal > div > div.swiper-slide > img')
 
       # create shelter first as pet must have a shelter
       shelter = extract_shelter_info
       shelter.save
 
       #get pet info
-      pet_info = extract_pet_info s.id
+      pet_info = extract_pet_info shelter.id
 
       # create pet
-      p = Pet.find_or_initialize_by p['api_id']
+      p = Pet.find_or_initialize_by api_id: pet_info['api_id']
 
       if p.save
         # create images
@@ -292,14 +295,14 @@ class AdoptAPetScrape < Scraper
     scrape_js_pets
     
     if Shelter.last.present? && Shelter.last.updated_at < (Date::today - 1.day)
-      scrape_locations @browser
+      scrape_locations
     elsif Shelter.last.nil?
-      scrape_locations @browser
+      scrape_locations
     end
     
-    scrape_html_pet_data @browser
+    scrape_html_pet_data
 
-    scrape_html_pet_links @browser
+    scrape_html_pet_links
   end
 
 end
