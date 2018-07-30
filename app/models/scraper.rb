@@ -4,6 +4,10 @@ class Scraper
     @browser = browser
   end
 
+  def safeStrip(s)
+    s.to_s.strip unless s.nil?
+  end
+
   def get(url)
     @browser.get url
   end

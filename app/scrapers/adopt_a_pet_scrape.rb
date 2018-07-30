@@ -10,30 +10,32 @@ class AdoptAPetScrape < Scraper
 
   def parse_pet_data(data)
     parsed_data = {
-      name:                 data['name'],  #somestuff
-      api_id:               data['api_id'],  #somestuff
-      pet_id:               data['id'],  #somestuff
-      description:          data['description1'],  #somestuff
-      date_of_birth:        data['date_of_birth'],  #somestuff
-      breed_primary:        data['breedPrimary'],  #somestuff
-      desexed:              data['isDesexed'],  #somestuff
-      primary_colour:       data['primary_colour']['colour'],  #somestuff
-      behaviour_evaluated:  data['hadBehaviourEvalidated'],  #somestuff
-      health_checked:       data['hadHealthChecked'],  #somestuff
-      vaccinated:           data['isVaccinated'],  #somestuff
-      wormed:               data['isWormed'],  #somestuff
-      special_needs_ok:     data['isSpecialNeedsOkay'],  #somestuff
-      long_term_resident:   data['isLongTermResident'],  #somestuff
-      senior:               data['isSeniorPet'],  #somestuff
-      microchipped:         data['isMicrochipped'],  #somestuff
-      shelter:              data['shelter'],  #somestuff
-      sex:                  data['sex'],  #somestuff
-      size:                 data['size']['size'],  #somestuff
+      name:                 safeStrip(data['name']), #somestuff
+      api_id:               safeStrip(data['api_id']),  #somestuff
+      pet_id:               safeStrip(data['id']),  #somestuff
+      description:          safeStrip(data['description1']),  #somestuff
+      date_of_birth:        safeStrip(data['date_of_birth']),  #somestuff
+      breed_primary:        safeStrip(data['breedPrimary']),  #somestuff
+      breed_secondary:      safeStrip(data['breedSecondary']),
+      desexed:              safeStrip(data['isDesexed']),  #somestuff
+      primary_colour:       safeStrip(data['primary_colour']['colour']),  #somestuff
+      secondary_colour:     safeStrip(data['secondary_colour']['colour']),
+      behaviour_evaluated:  safeStrip(data['hadBehaviourEvalidated']),  #somestuff
+      health_checked:       safeStrip(data['hadHealthChecked']),  #somestuff
+      vaccinated:           safeStrip(data['isVaccinated']),  #somestuff
+      wormed:               safeStrip(data['isWormed']),  #somestuff
+      special_needs_ok:     safeStrip(data['isSpecialNeedsOkay']),  #somestuff
+      long_term_resident:   safeStrip(data['isLongTermResident']),  #somestuff
+      senior:               safeStrip(data['isSeniorPet']),  #somestuff
+      microchipped:         safeStrip(data['isMicrochipped']),  #somestuff
+      shelter:              safeStrip(data['shelter']),  #somestuff
+      sex:                  safeStrip(data['sex']),  #somestuff
+      size:                 safeStrip(data['size']['size']),  #somestuff
       animal_status:        parse_status( data['animal_status'] ),  #somestuff
-      #animal_type:          data[],  #somestuff
-      public_url:           data['public_url'],  #somestuff
-      active:               data['isActive'],  #somestuff
-      type_name:            data['type']['type_title']  #somestuff
+      #animal_type:          data[]),  #somestuff
+      public_url:           safeStrip(data['public_url']),  #somestuff
+      active:               safeStrip(data['isActive']),  #somestuff
+      type_name:            safeStrip(data['type']['type_title'])  #somestuff
     }
   end
 
@@ -99,10 +101,7 @@ class AdoptAPetScrape < Scraper
       s.state = shelter.attribute("data-state")
       s.name = shelter.text
       s.save
-      end
     end
-
-    return nil
   end
 
   def get(url)
@@ -270,12 +269,11 @@ class AdoptAPetScrape < Scraper
       shelter.save
 
       #get pet info
-      pet_info = extract_pet_info shelter.id
+      pet_info = parse_pet_data(extract_pet_info shelter.id)
 
       # create pet
-      p = Pet.find_or_initialize_by api_id: pet_info['api_id']
-
-      if p.save
+      p = Pet.find_or_initialize_by api_id: pet_info[:api_id]
+      if (p.update pet_info)
         # create images
         # active image first
         p.photos.find_or_create_by :image_path => active_image['src']
@@ -284,7 +282,6 @@ class AdoptAPetScrape < Scraper
           p.photos.find_or_create_by :image_path => pic['src']
         end
       end
-      images
     end
   end
 
