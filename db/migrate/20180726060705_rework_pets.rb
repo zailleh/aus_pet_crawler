@@ -9,26 +9,12 @@ class ReworkPets < ActiveRecord::Migration[5.2]
       t.remove :description2
       t.remove :readable_age
       t.remove :ageMonths
+      t.remove :isCrossBreed
       t.remove :ageYears
       t.remove :colour_url
       t.remove :breeder_id
       t.remove :youTubeVideo
       t.change :animal_status, :string
-
-      t.rename :adoptionCost, :adoption_cost
-      t.rename :isCrossBreed, :cross_breed
-      t.rename :breedPrimary, :breed_primary
-      t.rename :breedSecondary, :breed_secondary
-      t.rename :isDesexed, :desexed
-      t.rename :hadBehaviourEvaluated, :behaviour_evaluated
-      t.rename :hadHealthChecked, :health_checked
-      t.rename :isVaccinated, :vaccinated
-      t.rename :isWormed, :wormed
-      t.rename :isSpecialNeedsOkay, :special_needs_ok
-      t.rename :isLongtermResident, :long_term_resident
-      t.rename :isSeniorPet, :senior
-      t.rename :isMicrochipped, :microchipped
-      t.rename :isActive, :active
     end
   end
 end
