@@ -4,7 +4,7 @@ class Scraper
     @browser = browser
   end
 
-  def safeStrip(s)
+  def safe_strip(s)
     s.to_s.strip unless s.nil?
   end
 

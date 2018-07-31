@@ -10,32 +10,32 @@ class AdoptAPetScrape < Scraper
 
   def parse_pet_data(data)
     parsed_data = {
-      name:                 safeStrip(data['name']), #somestuff
-      api_id:               safeStrip(data['api_id']),  #somestuff
-      pet_id:               safeStrip(data['id']),  #somestuff
-      description:          safeStrip(data['description1']),  #somestuff
-      date_of_birth:        safeStrip(data['date_of_birth']),  #somestuff
-      breed_primary:        safeStrip(data['breedPrimary']),  #somestuff
-      breed_secondary:      safeStrip(data['breedSecondary']),
-      desexed:              safeStrip(data['isDesexed']),  #somestuff
-      primary_colour:       safeStrip(data['primary_colour']['colour']),  #somestuff
-      secondary_colour:     safeStrip(data['secondary_colour']['colour']),
-      behaviour_evaluated:  safeStrip(data['hadBehaviourEvalidated']),  #somestuff
-      health_checked:       safeStrip(data['hadHealthChecked']),  #somestuff
-      vaccinated:           safeStrip(data['isVaccinated']),  #somestuff
-      wormed:               safeStrip(data['isWormed']),  #somestuff
-      special_needs_ok:     safeStrip(data['isSpecialNeedsOkay']),  #somestuff
-      long_term_resident:   safeStrip(data['isLongTermResident']),  #somestuff
-      senior:               safeStrip(data['isSeniorPet']),  #somestuff
-      microchipped:         safeStrip(data['isMicrochipped']),  #somestuff
-      shelter:              safeStrip(data['shelter']),  #somestuff
-      sex:                  safeStrip(data['sex']),  #somestuff
-      size:                 safeStrip(data['size']['size']),  #somestuff
+      name:                 safe_strip(data['name']), #somestuff
+      api_id:               safe_strip(data['api_id']),  #somestuff
+      pet_id:               safe_strip(data['id']),  #somestuff
+      description:          safe_strip(data['description1']),  #somestuff
+      date_of_birth:        safe_strip(data['date_of_birth']),  #somestuff
+      breed_primary:        safe_strip(data['breedPrimary']),  #somestuff
+      breed_secondary:      safe_strip(data['breedSecondary']),
+      desexed:              safe_strip(data['isDesexed']),  #somestuff
+      primary_colour:       safe_strip(data['primary_colour']['colour']),  #somestuff
+      secondary_colour:     safe_strip(data['secondary_colour']['colour']),
+      behaviour_evaluated:  safe_strip(data['hadBehaviourEvalidated']),  #somestuff
+      health_checked:       safe_strip(data['hadHealthChecked']),  #somestuff
+      vaccinated:           safe_strip(data['isVaccinated']),  #somestuff
+      wormed:               safe_strip(data['isWormed']),  #somestuff
+      special_needs_ok:     safe_strip(data['isSpecialNeedsOkay']),  #somestuff
+      long_term_resident:   safe_strip(data['isLongTermResident']),  #somestuff
+      senior:               safe_strip(data['isSeniorPet']),  #somestuff
+      microchipped:         safe_strip(data['isMicrochipped']),  #somestuff
+      shelter:              safe_strip(data['shelter']),  #somestuff
+      sex:                  safe_strip(data['sex']),  #somestuff
+      size:                 safe_strip(data['size']['size']),  #somestuff
       animal_status:        parse_status( data['animal_status'] ),  #somestuff
       #animal_type:          data[]),  #somestuff
-      public_url:           safeStrip(data['public_url']),  #somestuff
-      active:               safeStrip(data['isActive']),  #somestuff
-      type_name:            safeStrip(data['type']['type_title'])  #somestuff
+      public_url:           safe_strip(data['public_url']),  #somestuff
+      active:               safe_strip(data['isActive']),  #somestuff
+      type_name:            safe_strip(data['type']['type_title'])  #somestuff
     }
   end
 
@@ -98,8 +98,8 @@ class AdoptAPetScrape < Scraper
       shelter_id = shelter[:value]
       
       s = Shelter.find_or_initialize_by :shelter_id => shelter_id
-      s.state = shelter.attribute("data-state")
-      s.name = shelter.text
+      s.state = safe_strip shelter.attribute("data-state")
+      s.name = safe_strip shelter.text
       s.save
     end
   end
@@ -242,7 +242,7 @@ class AdoptAPetScrape < Scraper
             value = detail.text.remove attribute_name
           end
           
-          shelter_data[attribute] = value
+          shelter_data[attribute] = safe_strip value
         rescue
           # puts "no b tag found"
         end
